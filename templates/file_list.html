@@ -1,15 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>文件列表</title>
+    <title>文件浏览器</title>
+    <!-- 引入第三方组件资源（使用CDN链接） -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        body {
+            padding: 20px;
+        }
+
+        .table-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
-    <h1>文件列表</h1>
-    
-    <ul>
-        {% for file in files %}
-            <li><a href="{{ url_for('download', filename=file) }}">{{ file }}</a></li>
-        {% endfor %}
-    </ul>
+    <div class="container table-container">
+        <h1 class="mt-4 mb-4">文件浏览器</h1>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>文件名</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in files_and_dirs %}
+                <tr>
+                    <td>
+                        {% if item.type == 'dir' %}
+                            <a href="/change_dir/{{ item.name }}">{{ item.name }}</a>
+                        {% else %}
+                            {{ item.name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.type == 'file' %}
+                            <a href="/download/{{ item.name }}" class="btn btn-primary">下载</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
