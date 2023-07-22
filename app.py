@@ -21,6 +21,17 @@ class Tools:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
+    
+    @staticmethod
+    # 获取当前目录下的文件和文件夹列表
+    def get_files_and_dirs(path):
+        items = []
+        for item in os.listdir(path):
+            item_path = os.path.join(path, item)
+            item_type = 'file' if os.path.isfile(item_path) else 'dir'
+            items.append({'name': item, 'type': item_type})
+        return items
+
 
 class FileStorageWithProgress:
     def __init__(self, file, total):
@@ -67,21 +78,9 @@ def upload_file():
 
 @app.route('/list')
 def file_list():
-    # 获取当前目录
-    current_dir = app.static_folder
-
-    # 获取当前目录下的所有文件和目录
-    files_and_dirs = []
-
-    for file_or_dir in os.listdir(current_dir):
-        file_or_dir_path = os.path.join(current_dir, file_or_dir)
-        # 判断是文件还是目录
-        if os.path.isdir(file_or_dir_path):
-            files_and_dirs.append({'name': file_or_dir, 'type': 'dir'})
-        else:
-            files_and_dirs.append({'name': file_or_dir, 'type': 'file'})
-    # 渲染模板，显示文件列表和目录切换链接
-    return render_template('file_list.html', files_and_dirs=files_and_dirs)
+    current_path = os.getcwd()
+    files_and_dirs = Tools.get_files_and_dirs(current_path)
+    return render_template('file_list.html', current_path=current_path, files_and_dirs=files_and_dirs)
 
 
 @app.route('/download/<path:filename>')
@@ -99,11 +98,9 @@ def download(filename):
 
 @app.route('/change_dir/<path:pathname>')
 def change_dir(pathname):
-    # 切换目录
-    os.chdir(pathname)
-    
-    # 重定向到根目录
-    return redirect('/list')
+    current_path = os.path.join(os.getcwd(), pathname)
+    files_and_dirs = Tools.get_files_and_dirs(current_path)
+    return render_template('file_list.html', current_path=current_path, files_and_dirs=files_and_dirs)
 
 
 
