@@ -67,12 +67,12 @@ def upload_file():
         for f in files:
             filename = secure_filename(f.filename)
             file_path = os.path.join(app.config['UPLOADED_PATH'], filename)
+            total_size = int(request.headers.get('content-length', 0))
             with open(file_path, 'wb') as file:
-                file_storage = FileStorageWithProgress(
-                    file,
-                    int(request.headers.get('content-length', 0))
-                )
-                f.save(file_storage)
+                with tqdm(total=total_size, unit='B', unit_scale=True, ncols=50, colour='blue') as pbar:
+                    for chunk in f.stream:
+                        file.write(chunk)
+                        pbar.update(len(chunk))
     return render_template('index.html', address=address)
 
 
