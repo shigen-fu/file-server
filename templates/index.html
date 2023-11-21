@@ -12,7 +12,13 @@
     <!-- Change action value to your upload address -->
     <form action="{{ url_for('upload_file') }}" class="dropzone" method="POST" enctype="multipart/form-data"></form>
     <script src="https://cdn.bootcdn.net/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
-
+	 <script>
+  		// 初始化 Dropzone 实例并设置文件大小限制
+  		Dropzone.autoDiscover = false;
+  		var myDropzone = new Dropzone('.dropzone', {
+    		maxFilesize: 500, // 设置文件的最大大小为 5MB，单位为MB
+  		});
+	 </script>
     <div id="qrcode"></div>
 </div>
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
