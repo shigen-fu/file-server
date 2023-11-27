@@ -3,11 +3,9 @@ __date__ = '2023/06/20 17:37:44'
 
 import os
 import socket
-import time
 
 import qrcode_terminal
-from flask import (Flask, redirect, render_template, request,
-                   send_from_directory)
+from flask import Flask, render_template, request, send_from_directory
 from termcolor import colored
 from tqdm import tqdm
 from werkzeug.datastructures import FileStorage
@@ -33,24 +31,6 @@ class Tools:
         return items
 
 
-class FileStorageWithProgress:
-    def __init__(self, file, total):
-        self.file = file
-        self.total = total
-        self.progress_bar = tqdm(total=total, unit='B', unit_scale=True)
-    
-    def write(self, data):
-        self.file.write(data)
-        self.progress_bar.update(len(data))
-    
-    def flush(self):
-        self.file.flush()
-    
-    def close(self):
-        self.file.close()
-        self.progress_bar.close()
-
-
 port = 9000
 address = f'http://{Tools.get_local_ip()}:{port}'
 
@@ -69,7 +49,7 @@ def upload_file():
             file_path = os.path.join(app.config['UPLOADED_PATH'], filename)
             total_size = int(request.headers.get('content-length', 0))
             with open(file_path, 'wb') as file:
-                with tqdm(total=total_size, unit='B', unit_scale=True, ncols=50, colour='blue') as pbar:
+                with tqdm(total=total_size, unit='B', unit_scale=True, ncols=100, bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}', colour='blue') as pbar:
                     for chunk in f.stream:
                         file.write(chunk)
                         pbar.update(len(chunk))
