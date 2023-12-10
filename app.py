@@ -3,6 +3,7 @@ __date__ = '2023/06/20 17:37:44'
 
 import os
 import socket
+from datetime import datetime
 
 import qrcode_terminal
 from flask import Flask, render_template, request, send_from_directory
@@ -20,15 +21,38 @@ class Tools:
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
     
-    @staticmethod
+    
+    # 格式化文件大小
+    @classmethod
+    def format_size(cls, size):
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+
+    # 格式化时间
+    @classmethod
+    def format_time(cls, timestamp):
+        dt = datetime.fromtimestamp(timestamp)
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        
     # 获取当前目录下的文件和文件夹列表
-    def get_files_and_dirs(path):
+    @classmethod
+    def get_files_and_dirs(cls, path):
         items = []
+        relative_path = path.replace(app.static_folder, "", 1)
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
             item_type = 'file' if os.path.isfile(item_path) else 'dir'
-            items.append({'name': item, 'type': item_type})
-        return items
+            item_size = cls.format_size(os.path.getsize(item_path)) if os.path.isfile(item_path) else None
+            item_permissions = oct(os.stat(item_path).st_mode)[-3:] if os.path.isfile(item_path) else None
+            item_create_time = cls.format_time(os.path.getctime(item_path))
+            item_modify_time = cls.format_time(os.path.getmtime(item_path))
+            items.append({'name': item, 'type': item_type, 'size': item_size, 'permissions': item_permissions, 'create_time': item_create_time, 'modify_time': item_modify_time, 'relative_path': relative_path})
+        sorted_items = sorted(items, key=lambda x:x['modify_time'], reverse=True)
+        return sorted_items
 
 
 port = 9000
@@ -59,7 +83,7 @@ def upload_file():
 @app.route('/list')
 def file_list():
     current_path = os.getcwd()
-    files_and_dirs = Tools.get_files_and_dirs(current_path)
+    files_and_dirs = Tools.get_files_and_dirs(app.static_folder)
     return render_template('file_list.html', current_path=current_path, files_and_dirs=files_and_dirs)
 
 
@@ -78,7 +102,7 @@ def download(filename):
 
 @app.route('/change_dir/<path:pathname>')
 def change_dir(pathname):
-    current_path = os.path.join(os.getcwd(), pathname)
+    current_path = os.path.join(app.static_folder, pathname)
     files_and_dirs = Tools.get_files_and_dirs(current_path)
     return render_template('file_list.html', current_path=current_path, files_and_dirs=files_and_dirs)
 

@@ -11,7 +11,7 @@
         }
 
         .table-container {
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
         }
     </style>
@@ -24,6 +24,10 @@
             <thead>
                 <tr>
                     <th>文件名</th>
+                    <th>权限</th>
+                    <th>大小</th>
+                    <th>创建时间</th>
+                    <th>更新时间</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -37,9 +41,19 @@
                             {{ item.name }}
                         {% endif %}
                     </td>
+                    <td>{{ item.permissions }}</td>
+                    <td>
+                    {% if item.size %}
+                            {{ item.size }}
+                    {% else %}
+                            {{ '---' }}
+                    {% endif %}
+                    </td>        
+                    <td>{{ item.create_time }}</td>
+                    <td>{{ item.modify_time }}</td>
                     <td>
                         {% if item.type == 'file' %}
-                            <a href="/download/{{ item.name }}" class="btn btn-primary">下载</a>
+                            <a href="/download/{{ item.relative_path }}/{{ item.name }}" class="btn btn-primary">下载</a>
                         {% endif %}
                     </td>
                 </tr>
