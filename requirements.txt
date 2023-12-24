@@ -1,5 +1,4 @@
 Flask==2.3.2
 qrcode_terminal==0.8
 termcolor==2.3.0
-tqdm==4.65.0
 Werkzeug==2.0.3
