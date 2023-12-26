@@ -1,9 +1,9 @@
-<h1 align="center">file-server(开源的局域网文件共享工具)</h1>
+<h1 align="center">file-server(Open source LAN file sharing tool)</h1>
 
 <div align="center">
 
 [English](./README.en.md) | [简体中文](./README.md)
-🗂「file-server」是一个开箱即用的局域网文件共享工具，扫码即可上传文件，点击即可下载文件
+🗂「file-server」A plug-and-play LAN file sharing tool, scan to upload files, click to download files.
 
 [![GitHub license](https://img.shields.io/github/license/shigen-fu/file-server?style=flat-square)](LICENSE)
 [![Release Version](https://img.shields.io/github/v/release/shigen-fu/file-server?style=flat-square)](https://github.com/shigen-fu/file-server/releases/latest)
@@ -17,38 +17,37 @@
 <br>
 </div>
 
-# 🧑‍💻file-server介绍
+# 🧑‍💻file-server introduction
 
-一款开源的局域网文件传输共享工具，如果使用的是移动设备，直接扫描终端中的二维码或者浏览器页面上的二维码即可上传文件。</br>
-上传完毕之后的文件将会以列表的形式展示文件的具体信息：如文件名、大小、权限、修改时间等信息，单击【下载】按钮即可下载文件到设备中。</br>
+A open-source LAN file transfer and sharing tool, if using a mobile device, simply scan the QR code on the terminal or the QR code on the browser page to upload files. After uploading, the files will be displayed in a list format with detailed information such as file name, size, permissions, modification time, etc. Click the [Download] button to download the file to your device.
 
-具体的使用可参考 `shigen` 的文章：[开源一个局域网文件共享工具](https://juejin.cn/post/7304268951298392114)
+For specific usage, you can refer to the article by `shigen` : [Open Source a LAN File Sharing Tool](https://juejin.cn/post/7304268951298392114).
 
-# 🛠项目依赖
+# 🛠project dependencies
 
-需要有python3+的环境
+need python3+ environment
 
-* 后端依赖
+* dependencies of backend
   + Flask
   + qrcode_terminal
   + termcolor
 
-> 更多信息可参考[requirements.txt](./requirements.txt)文件
+> more info can refer the file [requirements.txt](./requirements.txt)
 
-* 前端依赖
+* dependencies of frontend
   + dropzone
   + qrcodejs
   + bootstrap
 
-> 依赖全部以CDN的形式引入，可以实现免安装，开箱即用
+> All dependencies are introduced in the form of CDN, allowing for a hassle-free installation and immediate use.
 
-# 📇仓库地址
+# 📇git repository
 
-[file-server 一款开箱即用的局域网文件共享工具](https://github.com/shigen-fu/file-server.git)
+[file-server An open source LAN file sharing tool](https://github.com/shigen-fu/file-server.git)
 
-# 🟢如何使用
+# 🟢how to use
 
-只需要一条命令即可运行
+Just one command.
 
 ```shell
 git clone https://github.com/shigen-fu/file-server.git && cd file-server && pip install -r requirements.txt && python app.py
