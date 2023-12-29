@@ -8,7 +8,6 @@ from datetime import datetime
 import qrcode_terminal
 from flask import Flask, render_template, request, send_from_directory
 from termcolor import colored
-from werkzeug.datastructures import FileStorage
 from typing import List, NoReturn
 
 
@@ -73,9 +72,13 @@ port = 9000
 address = f"http://{Tools.get_local_ip()}:{port}"
 
 app = Flask(__name__, static_folder="upload")
-app.config["UPLOADED_PATH"] = os.path.join(app.root_path, "upload")
-# 最大文件大小:500MB
-app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
+upload_path = os.path.join(app.root_path, "upload")
+if not os.path.exists(upload_path):
+    os.makedirs(upload_path)
+app.config["UPLOADED_PATH"] = upload_path
+# 最大文件大小:5000MB
+max_content_length = 500 * 1024 * 1024 * 10
+app.config["MAX_CONTENT_LENGTH"] = max_content_length
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -88,7 +91,9 @@ def upload_file():
             print(f"Uploading file {filename}")
             with open(file_path, "wb") as file:
                 file.write(f.read())
-    return render_template("index.html", address=address)
+    return render_template(
+        "index.html", address=address, max_content_length=max_content_length
+    )
 
 
 @app.route("/list")

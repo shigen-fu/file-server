@@ -53,3 +53,20 @@
 ```shell
 git clone https://github.com/shigen-fu/file-server.git && cd file-server && pip install -r requirements.txt && python app.py
 ```
+
+## Dockerfile
+
+`shigen` 一直用的是mac，所以没有发现问题。最后移植到了windows平台，发现运行项目，flask都有问题。于是新增了Dockerfile，直接在docker容器中运行服务。以下是相关命令：
+
+```shell
+docker build -t file-server:1.0.0 .
+docker run -d -p 9000:9000 --name file-server -v $(pwd)/file:/app/upload file-server:1.0.0
+```
+
+> docker初次构建的时间可能会很长，因为python官方的docker镜像大约在1GB左右。大部分的时间都在拉取镜像，建议配置docker的镜像加速。
+
+可以先提前单独下载好需要用到的基础镜像：
+
+```shell
+docker pull python:3.9
+```

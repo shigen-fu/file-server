@@ -37,7 +37,7 @@
 
 <script type="text/javascript">
     // Dropzone 配置
-    const MAX_FILE_SIZE = 500; // 最大文件大小，单位为MB
+    const MAX_FILE_SIZE = '{{max_content_length}}'; // 最大文件大小，单位为Bytes
     Dropzone.autoDiscover = false;
     var myDropzone = new Dropzone('.dropzone', {
       maxFilesize: MAX_FILE_SIZE,
