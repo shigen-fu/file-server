@@ -12,6 +12,7 @@ from typing import List, NoReturn
 
 
 class Tools:
+
     @staticmethod
     def get_local_ip():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -41,30 +42,24 @@ class Tools:
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
             item_type = "file" if os.path.isfile(item_path) else "dir"
-            item_size = (
-                cls.format_size(os.path.getsize(item_path))
-                if os.path.isfile(item_path)
-                else None
-            )
-            item_permissions = (
-                oct(os.stat(item_path).st_mode)[-3:]
-                if os.path.isfile(item_path)
-                else None
-            )
+            item_size = (cls.format_size(os.path.getsize(item_path))
+                         if os.path.isfile(item_path) else None)
+            item_permissions = (oct(os.stat(item_path).st_mode)[-3:]
+                                if os.path.isfile(item_path) else None)
             item_create_time = cls.format_time(os.path.getctime(item_path))
             item_modify_time = cls.format_time(os.path.getmtime(item_path))
-            items.append(
-                {
-                    "name": item,
-                    "type": item_type,
-                    "size": item_size,
-                    "permissions": item_permissions,
-                    "create_time": item_create_time,
-                    "modify_time": item_modify_time,
-                    "relative_path": relative_path,
-                }
-            )
-        sorted_items = sorted(items, key=lambda x: x["modify_time"], reverse=True)
+            items.append({
+                "name": item,
+                "type": item_type,
+                "size": item_size,
+                "permissions": item_permissions,
+                "create_time": item_create_time,
+                "modify_time": item_modify_time,
+                "relative_path": relative_path,
+            })
+        sorted_items = sorted(items,
+                              key=lambda x: x["modify_time"],
+                              reverse=True)
         return sorted_items
 
 
@@ -81,6 +76,12 @@ max_content_length = 500 * 1024 * 1024 * 10
 app.config["MAX_CONTENT_LENGTH"] = max_content_length
 
 
+# 全局的异常处理器
+@app.errorhandler(Exception)
+def handle_global_exception(error):
+    return str(error), 500
+
+
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
@@ -91,29 +92,33 @@ def upload_file():
             print(f"Uploading file {filename}")
             with open(file_path, "wb") as file:
                 file.write(f.read())
-    return render_template(
-        "index.html", address=address, max_content_length=max_content_length
-    )
+    return render_template("index.html",
+                           address=address,
+                           max_content_length=max_content_length)
 
 
 @app.route("/list")
 def file_list():
     current_path = os.getcwd()
     files_and_dirs = Tools.get_files_and_dirs(app.static_folder)
-    return render_template(
-        "file_list.html", current_path=current_path, files_and_dirs=files_and_dirs
-    )
+    return render_template("file_list.html",
+                           current_path=current_path,
+                           files_and_dirs=files_and_dirs)
 
 
 @app.route("/download/<path:filename>")
 def download(filename):
     # 构造文件路径
     file_path = os.path.join(app.static_folder, filename)
+    as_attachment_str = request.args.get('as_attachment', default='false')
+    as_attachment = True if as_attachment_str.lower() == 'true' else False
 
     # 检查文件是否存在并且是文件
     if os.path.exists(file_path) and os.path.isfile(file_path):
         # 使用send_from_directory函数实现文件下载
-        return send_from_directory(app.static_folder, filename, as_attachment=True)
+        return send_from_directory(app.static_folder,
+                                   filename,
+                                   as_attachment=as_attachment)
     else:
         # 文件不存在时返回404错误
         return "File not found", 404
@@ -123,9 +128,9 @@ def download(filename):
 def change_dir(pathname):
     current_path = os.path.join(app.static_folder, pathname)
     files_and_dirs = Tools.get_files_and_dirs(current_path)
-    return render_template(
-        "file_list.html", current_path=current_path, files_and_dirs=files_and_dirs
-    )
+    return render_template("file_list.html",
+                           current_path=current_path,
+                           files_and_dirs=files_and_dirs)
 
 
 def draw_qrcode(address: str) -> NoReturn:

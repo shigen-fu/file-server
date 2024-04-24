@@ -14,6 +14,20 @@
             max-width: 100%;
             margin: 0 auto;
         }
+
+        td {
+            vertical-align: middle;
+        }
+
+        .styled-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .styled-link:hover {
+            color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -23,6 +37,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th></th>
                     <th>文件名</th>
                     <th>权限</th>
                     <th>大小</th>
@@ -34,11 +49,12 @@
             <tbody>
                 {% for item in files_and_dirs %}
                 <tr>
+                    <td>{{ loop.index }}</td>
                     <td>
                         {% if item.type == 'dir' %}
-                            <a href="/change_dir/{{ item.name }}">{{ item.name }}</a>
+                            <a class="styled-link" href="/change_dir/{{ item.name }}">{{ item.name }}</a>
                         {% else %}
-                            {{ item.name }}
+                            <a class="styled-link" href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=false">{{ item.name }}</a>
                         {% endif %}
                     </td>
                     <td>{{ item.permissions }}</td>
@@ -53,7 +69,7 @@
                     <td>{{ item.modify_time }}</td>
                     <td>
                         {% if item.type == 'file' %}
-                            <a href="/download/{{ item.relative_path }}/{{ item.name }}" class="btn btn-primary">下载</a>
+                            <a href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=true" class="btn btn-primary">下载</a>
                         {% endif %}
                     </td>
                 </tr>
