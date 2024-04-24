@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9-alpine
 
 # 设置 pip 镜像源为阿里云镜像
 ENV PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
