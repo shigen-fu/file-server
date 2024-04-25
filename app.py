@@ -6,7 +6,7 @@ import socket
 from datetime import datetime
 
 import qrcode_terminal
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, abort
 from termcolor import colored
 from typing import List, NoReturn
 
@@ -82,6 +82,18 @@ def handle_global_exception(error):
     return str(error), 500
 
 
+# 请求需要携带特定的参数值
+REQUIRED_PARAMS_VALUE = 'xxxx'
+
+
+@app.before_request
+def check_required_params():
+    if request.path in ('/', '/list'):
+        name_param = request.args.get('name')
+        if not name_param or name_param != REQUIRED_PARAMS_VALUE:
+            abort(401, 'Invalid request')
+
+
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
@@ -102,6 +114,7 @@ def file_list():
     current_path = os.getcwd()
     files_and_dirs = Tools.get_files_and_dirs(app.static_folder)
     return render_template("file_list.html",
+                           address=address,
                            current_path=current_path,
                            files_and_dirs=files_and_dirs)
 
