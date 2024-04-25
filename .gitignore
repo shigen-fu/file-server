@@ -25,7 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-upload/
+upload/*
+!upload/favicon.ico
 file/
 
 # PyInstaller
