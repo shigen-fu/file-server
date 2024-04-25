@@ -70,3 +70,11 @@ docker run -d -p 9000:9000 --name file-server -v $(pwd)/file:/app/upload file-se
 ```shell
 docker pull python:3.9
 ```
+
+### 24-4-25新增部署方式
+
+如果觉得上述的命令敲起来麻烦，可以直接运行给定的部署脚本。
+
+```shell
+bash deploy.sh
+```

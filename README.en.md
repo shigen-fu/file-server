@@ -52,3 +52,28 @@ Just one command.
 ```shell
 git clone https://github.com/shigen-fu/file-server.git && cd file-server && pip install -r requirements.txt && python app.py
 ```
+
+## Dockerfile
+
+`shigen` has been using macOS all along, so I didn't notice any issues. Finally, when he ported the project to the Windows platform, I encountered problems running Flask. Therefore, I added a Dockerfile to run the service directly in a Docker container. Below are the relevant commands:
+
+```shell
+docker build -t file-server:1.0.0 .
+docker run -d -p 9000:9000 --name file-server -v $(pwd)/file:/app/upload file-server:1.0.0
+```
+
+> The initial build of Docker may take a long time because the official Python Docker image is around 1GB in size. Most of the time is spent pulling the image, so it's recommended to configure Docker with image acceleration.
+
+You can first separately download the base image needed:
+
+```shell
+docker pull python:3.9
+```
+
+### Deployment Method Added on 24-4-25
+
+If you find the above commands cumbersome to type, you can directly run the provided deployment script.
+
+```shell
+bash deploy.sh
+```
