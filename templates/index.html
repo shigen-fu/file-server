@@ -4,28 +4,42 @@
     <title>文件局域网上传</title>
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/dropzone/5.9.3/min/dropzone.min.css">
     <style>
+        /* 优化二维码容器的样式 */
         #qrcode {
-            margin-top: 20px;
-            display: none;
-            border-radius: 10px;
-            background-color: #f3f3f3;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          display: none;
+          border-radius: 10px;
+          border: 2px solid #007bff;
+          background-color: #ffffff;
+          padding: 10px;
+          position: relative;
+          width: 256px;
+        }
+
+        /* 添加小三角形指示器 */
+        #qrcode:before {
+          content: '';
+          position: absolute;
+          top: -20px; /* 控制三角形的位置 */
+          left: 20%;
+          transform: translateX(-50%);
+          border-width: 10px;
+          border-style: solid;
+          border-color: transparent transparent #007bff transparent; /* 蓝色边框，其他透明 */
         }
         .btn-primary {
-            margin-top: 20px; 
-            padding: 10px 20px; 
-            font-size: 16px; 
-            background-color: #0087F7; 
-            color: #fff; border: none; 
-            border-radius: 5px; 
-            cursor: pointer;
+          margin-top: 20px; 
+          padding: 10px 20px; 
+          font-size: 16px; 
+          background-color: #0087F7; 
+          color: #fff; border: none; 
+          border-radius: 5px; 
+          cursor: pointer;
         }    
     </style>
 </head>
 
 <body>
-<div>    
+<div>
     <!-- Change action value to your upload address -->
     <form action="{{ url_for('upload_file') }}" class="dropzone" method="POST" enctype="multipart/form-data"></form>
     <button id="toggleQRCodeBtn" class="btn-primary">显示二维码</button>
@@ -34,6 +48,7 @@
 </div>
     <script src="https://cdn.bootcdn.net/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
 <script type="text/javascript">
     // Dropzone 配置
@@ -44,9 +59,9 @@
     });
 
     // 显示和隐藏二维码
-    const toggleQRCodeBtn = document.getElementById('toggleQRCodeBtn');
-    const qrcodeEl = document.getElementById('qrcode');
-    const qrcode = new QRCode(qrcodeEl, {
+    const toggleQRCodeBtn = $('#toggleQRCodeBtn');
+    const qrcodeEl = $('#qrcode');
+    const qrcode = new QRCode(qrcodeEl[0], {
       width: 256,
       height: 256,
       colorDark: "#000000",
@@ -54,16 +69,16 @@
       correctLevel: QRCode.CorrectLevel.H
     });
     
-    toggleQRCodeBtn.addEventListener('click', function handleToggleClick() {
-      if (qrcodeEl.style.display === 'none') {
+    toggleQRCodeBtn.click(function() {
+      if (qrcodeEl.css('display') === 'none') {
         const address = '{{address}}';
         qrcode.clear();
         qrcode.makeCode(address);
-        qrcodeEl.style.display = 'block';
-        toggleQRCodeBtn.textContent = '隐藏二维码';
+        qrcodeEl.show();
+        toggleQRCodeBtn.text('隐藏二维码');
       } else {
-        qrcodeEl.style.display = 'none';
-        toggleQRCodeBtn.textContent = '显示二维码';
+        qrcodeEl.hide();
+        toggleQRCodeBtn.text('显示二维码');
       }
     });
 </script>

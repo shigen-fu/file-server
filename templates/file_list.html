@@ -28,6 +28,30 @@
         .styled-link:hover {
             color: #0056b3;
         }
+
+        /* 优化二维码容器的样式 */
+        .qr-code-container {
+          display: none;
+          border-radius: 10px;
+          border: 2px solid #007bff;
+          background-color: #ffffff;
+          padding: 10px;
+          position: relative;
+          width: 140px;
+          margin-top: 12px;
+        }
+
+        /* 添加小三角形指示器 */
+        .qr-code-container:before {
+          content: '';
+          position: absolute;
+          top: -20px; /* 控制三角形的位置 */
+          right: 15%;
+          transform: translateX(-50%);
+          border-width: 10px;
+          border-style: solid;
+          border-color: transparent transparent #007bff transparent; /* 蓝色边框，其他透明 */
+        }
     </style>
 </head>
 <body>
@@ -70,6 +94,8 @@
                     <td>
                         {% if item.type == 'file' %}
                             <a href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=true" class="btn btn-primary">下载</a>
+                            <button class="toggle-qrcode-btn btn btn-success" data-file-address="{{ address }}/download/{{ item.relative_path }}/{{ item.name }}">分享</button>
+                            <div class="qr-code-container"></div>
                         {% endif %}
                     </td>
                 </tr>
@@ -77,5 +103,34 @@
             </tbody>
         </table>
     </div>
+    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.toggle-qrcode-btn').click(function() {
+                // 获取文件名或其他信息
+                const address = $(this).data('file-address');
+                
+                // 找到当前按钮所在的行
+                const row = $(this).closest('tr');
+                const qrCodeContainer = row.find('.qr-code-container');
+
+                if (qrCodeContainer.find('canvas').length === 0) {
+                    // 如果二维码不存在，则创建并显示
+                    const qrcode = new QRCode(qrCodeContainer[0], {
+                        text: address,
+                        width: 120,
+                        height: 120
+                    });
+                    qrCodeContainer.show();
+                    $(this).text('取消分享');
+                } else {
+                    qrCodeContainer.empty();
+                    qrCodeContainer.hide();
+                    $(this).text('分享');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
