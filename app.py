@@ -88,7 +88,7 @@ REQUIRED_PARAMS_VALUE = 'xxxx'
 
 @app.before_request
 def check_required_params():
-    if request.path == '/list':
+    if request.path in ('/', '/list') and request.method == 'GET':
         name_param = request.args.get('name')
         if not name_param or name_param != REQUIRED_PARAMS_VALUE:
             abort(401, 'Invalid request')
