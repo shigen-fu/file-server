@@ -94,22 +94,46 @@
                     <td>
                         {% if item.type == 'file' %}
                             <a href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=true" class="btn btn-primary">下载</a>
-                            <button class="toggle-qrcode-btn btn btn-success" data-file-address="{{ address }}/download/{{ item.relative_path }}/{{ item.name }}">分享</button>
+                            <button class="toggle-qrcode-btn btn btn-success" data-file-address="/download/{{ item.relative_path }}/{{ item.name }}">分享</button>
                             <div class="qr-code-container"></div>
                         {% endif %}
+                        <button class="btn btn-danger delete-file-btn" data-file="/delete/{{ item.relative_path }}/{{ item.name }}">删除</button>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- 删除确认模态框 -->
+        <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                确认要删除文件或文件夹 <span class="file-info"></span> 吗？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-close-modal" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger confirm-delete-button">确认删除</button>
+            </div>
+            </div>
+        </div>
+        </div>
     </div>
     <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.min.js"></script>
     <script>
         $(document).ready(function() {
+            // 显示分享的二维码
             $('.toggle-qrcode-btn').click(function() {
                 // 获取文件名或其他信息
-                const address = $(this).data('file-address');
+                const address = "{{address}}" + $(this).data('file-address');
                 
                 // 找到当前按钮所在的行
                 const row = $(this).closest('tr');
@@ -130,6 +154,55 @@
                     $(this).text('分享');
                 }
             });
+
+            // 当点击删除文件按钮
+            $('.delete-file-btn').on('click', function() {
+                var fileAddress = $(this).attr('data-file');
+                console.log('file address: ' + fileAddress);
+                // 将文件信息显示在确认删除模态框中
+                $('#confirmDeleteModal .file-info').text(fileAddress);
+                $('#confirmDeleteModal').modal('show');
+            });
+
+            // 按钮关闭对话框
+            $('.btn-close-modal').on('click', function() {
+                closeConfirmDeleteModal();
+            });
+
+            // 当点击确认删除按钮时
+            $('.confirm-delete-button').on('click', function() {
+                 // 获取文件信息属性
+                var fileAddress = $('#confirmDeleteModal .file-info').text();
+                console.log('api-address: ' + fileAddress);
+                // 调用删除文件的接口
+                $.ajax({
+                    url: "{{address}}" + fileAddress,
+                    method: 'DELETE',
+                    success: function(response) {
+                    // 成功删除后刷新数据
+                    refreshData();
+                    // 关闭模态框
+                    closeConfirmDeleteModal();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('删除文件失败: ', error);
+                    }
+                });
+            });
+
+            // 刷新数据的函数
+            function refreshData() {
+                $('body,html').animate({
+                    scrollTop: 0
+                }, 1000, function() {
+                    window.location.reload();
+                });
+            }
+            
+            // 关闭删除文件的对话框
+            function closeConfirmDeleteModal() {
+                $('#confirmDeleteModal').modal('hide');
+            }
         });
     </script>
 </body>

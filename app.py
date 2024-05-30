@@ -4,11 +4,11 @@ __date__ = "2023/06/20 17:37:44"
 import os
 import socket
 from datetime import datetime
+from typing import List, NoReturn
 
 import qrcode_terminal
-from flask import Flask, render_template, request, send_from_directory, abort
+from flask import Flask, abort, render_template, request, send_from_directory
 from termcolor import colored
-from typing import List, NoReturn
 
 
 class Tools:
@@ -132,6 +132,19 @@ def change_dir(pathname):
     return render_template("file_list.html",
                            current_path=current_path,
                            files_and_dirs=files_and_dirs)
+
+
+@app.route("/delete/<path:filename>", methods=['DELETE'])
+def delete(filename):
+    print(f'deleteing {filename}')
+    if filename:
+        file_abs_path = os.path.join(app.static_folder, filename)
+        if os.path.exists(file_abs_path):
+            if os.path.isdir(file_abs_path):
+                os.remove(file_abs_path)
+            elif os.path.isfile(file_abs_path):
+                os.remove(file_abs_path)
+    return "success", 200
 
 
 def draw_qrcode(address: str) -> NoReturn:
