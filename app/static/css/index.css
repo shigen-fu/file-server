@@ -1,0 +1,61 @@
+.file-qrcode {
+    display: none;
+    margin-top: 1rem;
+    text-align: center;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.file-qrcode canvas {
+    margin: 0 auto;
+}
+
+.file-qrcode::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 10px 10px 10px;
+    border-style: solid;
+    border-color: transparent transparent #ddd transparent;
+}
+
+.file-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.file-actions form {
+    display: inline;
+}
+
+.file-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-table th,
+.file-table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.file-table th {
+    background-color: #f8f9fa;
+}
+
+.file-actions button.share-btn:hover+.file-qrcode {
+    display: block;
+}
+
+.folder-icon {
+    margin-right: 0.5rem;
+}

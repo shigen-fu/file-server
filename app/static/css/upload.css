@@ -1,0 +1,41 @@
+#fileDropzone {
+    border: 2px dashed #007bff;
+    padding: 2rem;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+#qrcode {
+    display: none;
+    margin-top: 2rem;
+    text-align: center;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#qrcode canvas {
+    margin: 0 auto;
+}
+
+#qrcode::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 10px 10px 10px;
+    border-style: solid;
+    border-color: transparent transparent #ddd transparent;
+}
+
+.share-btn {
+    margin-top: 2rem;
+    position: relative;
+}
+
+.share-btn:hover+#qrcode {
+    display: block;
+}

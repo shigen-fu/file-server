@@ -78,3 +78,19 @@ docker pull python:3.9
 ```shell
 bash deploy.sh
 ```
+
+## 开发IDE及插件推荐
+
+开发IDE：Visual Studio Code
+
+插件推荐：
+
+| 序号 | 插件名称                                    | 描述                                                                     | 安装命令                                             |
+| ---- | ------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| 1    | Python Docstring Generator                  | 自动生成Python函数和类的Docstring，支持多种格式（如Google、NumPy等）。   | ext install njpwerner.autodocstring                  |
+| 2    | Python Indent                               | 改进Python代码的缩进，使其更加智能。                                     | ext install kevinrose.vsc-python-indent              |
+| 3    | Python Test Explorer for Visual Studio Code | 提供了一个测试资源管理器，可以在VSCode中运行和调试Python单元测试。       | ext install littlefoxteam.vscode-python-test-adapter |
+| 4    | MagicPython                                 | 增强Python代码的语法高亮，特别是在使用现代Python特性时表现更好。         | ext install magicstack.magicpython                   |
+| 5    | Python Snippets                             | 提供了一些常用的Python代码片段，提升开发效率。                           | ext install frhtylcn.pythonsnippets                  |
+| 6    | Black Formatter                             | Black是一个Python代码格式化工具，可以自动格式化代码，使其符合PEP 8规范。 | ext install ms-python.black-formatter                |
+| 7    | isort                                       | 自动排序Python导入语句，使代码更加整洁。                                 | ext install ms-python.isort                          |

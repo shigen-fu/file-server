@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Upload File{% endblock %}
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+{% endblock %}
+{% block content %}
+<h2>Upload a File</h2>
+<a class="btn btn-primary mb-3" href="{{ url_for('files.home', path=path) }}">Back to File List</a>
+<form action="{{ url_for('files.upload', path=path) }}" class="dropzone" id="fileDropzone"></form>
+<button class="btn btn-info share-btn">Share</button>
+<div id="qrcode"></div>
+{% endblock %}

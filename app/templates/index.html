@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}
+{% block content %}
+<h2>Welcome, {{ session.get('username') }}</h2>
+<a class="btn btn-primary mb-3" href="{{ url_for('files.upload', path=path) }}">Upload a file</a>
+<table class="file-table">
+    <thead>
+        <tr>
+            <th>File Name</th>
+            <th>Size</th>
+            <th>Permissions</th>
+            <th>Last Modified</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if path %}
+        <tr>
+            <td colspan="5">
+                <a href="{{ url_for('files.home', path=path.rsplit('/', 1)[0]) }}">
+                    <span class="folder-icon">📁</span>..
+                </a>
+            </td>
+        </tr>
+        {% endif %}
+        {% for file in files %}
+        <tr>
+            <td>
+                {% if file.is_dir %}
+                <a href="{{ url_for('files.home', path=path + '/' + file.name) }}">
+                    <span class="folder-icon">📁</span>{{ file.name }}
+                </a>
+                {% else %}
+                {{ file.name }}
+                {% endif %}
+            </td>
+            <td>{{ file.size }}</td>
+            <td>{{ file.permissions }}</td>
+            <td>{{ file.mtime }}</td>
+            <td>
+                <div class="file-actions">
+                    {% if not file.is_dir %}
+                    <a class="btn btn-sm btn-success"
+                        href="{{ url_for('files.download', filename=file.name, path=path) }}">Download</a>
+                    <form action="{{ url_for('files.delete_file', filename=file.name, path=path) }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                    <button class="btn btn-sm btn-info share-btn">Share</button>
+                    <div class="file-qrcode" data-url="{{ url_for('files.download', filename=file.name, path=path) }}">
+                    </div>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

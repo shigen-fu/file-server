@@ -1,0 +1,21 @@
+# config.yaml
+server:
+  host: "0.0.0.0"
+  port: 9000
+
+app:
+  debug: true
+  secret_key: "your_secret_key"
+  upload_folder: 'app/static/uploads'
+  max_content_path: 16777216  # 16 MB
+
+users:
+  - username: 'admin'
+    password: 'admin'
+  - username: 'user1'
+    password: 'user1'
+
+
+logging:
+  level: "DEBUG"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

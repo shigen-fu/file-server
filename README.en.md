@@ -77,3 +77,20 @@ If you find the above commands cumbersome to type, you can directly run the prov
 ```shell
 bash deploy.sh
 ```
+
+## Deployment IDE and adviced plugins
+
+IDE: Visual Studio Code
+
+advanced plugins
+
+| Serial No. | Plugin Name                                 | Description                                                                                                               | Installation Command                                 |
+| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1          | Python Docstring Generator                  | Automatically generates Docstring for Python functions and classes, supports multiple formats (e.g. Google, NumPy, etc.). | ext install njpwerner.autodocstring                  |
+| 2          | Python Indent                               | Improves the indentation of Python code, making it more intelligent.                                                      | ext install kevinrose.vsc-python-indent              |
+| 3          | Python Test Explorer for Visual Studio Code | Provides a test resource explorer for running and debugging Python unit tests in VSCode.                                  | ext install littlefoxteam.vscode-python-test-adapter |
+| 4          | MagicPython                                 | Enhances syntax highlighting for Python code, particularly when using modern Python features.                             | ext install magicstack.magicpython                   |
+| 5          | Python Snippets                             | Provides some commonly used Python code snippets to enhance development efficiency.                                       | ext install frhtylcn.pythonsnippets                  |
+| 6          | Black Formatter                             | Black is a Python code formatting tool that automatically reformats code to comply with PEP 8 standards.                  | ext install ms-python.black-formatter                |
+| 7          | isort                                       | Automatically sorts Python import statements to make the code more orderly.                                               | ext install ms-python.isort                          |
+
