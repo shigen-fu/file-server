@@ -422,9 +422,9 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                {% set file_path = item.relative_path if item.relative_path else item.name %}
                                 {% set file_path = file_path.replace('//', '/') %}
-                                <a href="{% if item.type == 'dir' %}{{ url_for('file_list', path=file_path) }}{% else %}{{ url_for('download', filename=file_path) }}?as_attachment=false{% endif %}" 
+                                <a href="{% if item.type == 'dir' %}{{ url_for('file_list', path=file_path) }}{% else %}{{ url_for('download', filepath=file_path) }}?as_attachment=false{% endif %}" 
                                    class="file-name">
                                     {% if item.type == 'dir' %}
                                         <i class="fas fa-folder me-1 text-warning"></i>
@@ -450,21 +450,20 @@
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     {% if item.type == 'file' %}
-                                        {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                        {% set file_path = item.relative_path if item.relative_path else item.name %}
                                         {% set file_path = file_path.replace('//', '/') %}
-                                        <a href="{{ url_for('download', filename=file_path) }}?as_attachment=true" 
+                                        <a href="{{ url_for('download', filepath=file_path) }}?as_attachment=true" 
                                            class="btn btn-outline-primary btn-action" 
                                            title="下载">
                                             <i class="fas fa-download"></i>
                                         </a>
-                                        <a href="{{ url_for('download', filename=file_path) }}?as_attachment=false" 
-                                           class="btn btn-outline-success btn-action" 
-                                           target="_blank"
-                                           title="预览">
+                                        <button class="btn btn-outline-success btn-action preview-btn" 
+                                                data-filepath="{{ file_path }}"
+                                                title="预览">
                                             <i class="fas fa-eye"></i>
-                                        </a>
+                                        </button>
                                     {% endif %}
-                                    {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                    {% set file_path = item.relative_path if item.relative_path else item.name %}
                                     {% set file_path = file_path.replace('//', '/') %}
                                     <button class="btn btn-outline-danger btn-action delete-btn" 
                                             data-filename="{{ file_path }}"
@@ -715,7 +714,52 @@
             loadStats();
             loadFileTypeStats();
             loadFolderSizeStats();
+            
+            // 绑定预览按钮事件
+            document.querySelectorAll('.preview-btn').forEach(btn => {
+                btn.addEventListener('click', function(event) {
+                    const filepath = this.dataset.filepath;
+                    previewFile(filepath, event);
+                });
+            });
         });
+        
+        // 预览文件功能
+        function previewFile(filepath, event) {
+            // 显示加载状态
+            const button = event.target.closest('.preview-btn');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            fetch('/api/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filepath: filepath
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 在新窗口打开预览
+                    window.open(data.preview_url, '_blank');
+                } else {
+                    alert('预览失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('预览错误:', error);
+                alert('预览失败，请检查网络连接');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                button.innerHTML = '<i class="fas fa-eye"></i>';
+                button.disabled = false;
+            });
+        }
 
         // 加载基本统计信息
         function loadStats() {

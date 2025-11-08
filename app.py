@@ -198,42 +198,28 @@ def handle_upload():
         # 获取当前路径参数（从文件列表页面传递）
         current_path = request.form.get('current_path', '').strip()
         
-        # 调试信息：打印所有文件字段
-        print(f"请求文件字段: {list(request.files.keys())}")
-        print(f"当前路径参数: {current_path}")
+        # 检查是否有文件上传
+        file = None
         
-        # 检查是否有文件上传 - 支持Dropzone的字段名
-        file_field = None
-        
-        # 首先检查是否有任何文件字段
-        if request.files:
-            # Dropzone可能使用 file[0], file[1] 等格式
-            for field_name in request.files.keys():
-                if field_name.startswith('file'):
-                    file_field = request.files[field_name]
-                    print(f"找到文件字段: {field_name}")
-                    break
+        # 查找文件字段
+        for field_name in request.files.keys():
+            if field_name.startswith('file'):
+                file = request.files[field_name]
+                break
         
         # 如果没有找到，尝试常见的字段名
-        if not file_field:
+        if not file:
             for field_name in ['file', 'files[]', 'dzfile', 'file[0]']:
                 if field_name in request.files:
-                    file_field = request.files[field_name]
-                    print(f"找到文件字段: {field_name}")
+                    file = request.files[field_name]
                     break
         
-        if not file_field:
-            print("未找到文件字段")
+        if not file:
             return jsonify({'error': '请选择文件'}), 400
-        
-        file = file_field
         
         # 检查文件名是否为空
         if not file or file.filename == '' or file.filename is None:
-            print(f"文件名为空: {file.filename if file else 'No file'}")
             return jsonify({'error': '请选择有效的文件'}), 400
-        
-        print(f"处理文件: {file.filename}")
         
         # 验证文件类型
         allowed_extensions = upload_config.get('allowed_extensions', [])
@@ -303,10 +289,6 @@ def handle_upload():
         # 保存文件
         file.save(file_path)
         
-        # 记录上传日志
-        print(f"文件上传成功: {safe_filename} (大小: {file_size} bytes)")
-        print(f"保存路径: {file_path}")
-        
         return jsonify({
             'success': True,
             'message': f'文件 {safe_filename} 上传成功！',
@@ -315,7 +297,6 @@ def handle_upload():
         }), 200
         
     except Exception as e:
-        print(f"文件上传错误: {str(e)}")
         return jsonify({
             'error': '文件上传失败',
             'details': str(e)
@@ -337,16 +318,8 @@ def file_list(path=''):
         # 规范化路径，移除多余的斜杠
         current_path = os.path.normpath(current_path)
         
-        # 调试信息：打印路径检查详情
-        print(f"文件列表路径检查:")
-        print(f"  UPLOAD_FOLDER: {app.config['UPLOAD_FOLDER']}")
-        print(f"  current_path: {current_path}")
-        print(f"  absolute UPLOAD_FOLDER: {os.path.abspath(app.config['UPLOAD_FOLDER'])}")
-        print(f"  absolute current_path: {os.path.abspath(current_path)}")
-        
         # 安全检查
         if not FileUtils.is_safe_path(app.config['UPLOAD_FOLDER'], current_path):
-            print(f"路径安全检查失败!")
             return render_template('error.html', 
                                  error_code=403,
                                  error_message='访问路径不安全'), 403
@@ -365,66 +338,40 @@ def file_list(path=''):
                              error_message=f'获取文件列表失败: {str(e)}'), 500
 
 
-@app.route('/download/<path:filename>')
+@app.route('/download/<path:filepath>')
 @login_required
-def download(filename):
-    """文件下载"""
+def download(filepath):
+    """文件下载/预览"""
     try:
-        # 调试信息：打印文件路径详情
-        print(f"下载文件路径检查:")
-        print(f"  UPLOAD_FOLDER: {app.config['UPLOAD_FOLDER']}")
-        print(f"  filename: {filename}")
-        
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
-        # 规范化路径
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
         file_path = os.path.normpath(file_path)
-        
-        print(f"  file_path: {file_path}")
-        print(f"  absolute file_path: {os.path.abspath(file_path)}")
-        print(f"  file exists: {os.path.exists(file_path)}")
         
         # 安全检查
         if not FileUtils.is_safe_path(app.config['UPLOAD_FOLDER'], file_path):
-            print(f"路径安全检查失败!")
             return render_template('error.html', 
                                  error_code=403,
                                  error_message='访问路径不安全'), 403
         
         if not os.path.exists(file_path):
-            print(f"文件不存在!")
             return render_template('error.html', 
                                  error_code=404,
                                  error_message='文件不存在'), 404
         
+        # 检查是否为文件夹
+        if os.path.isdir(file_path):
+            return render_template('error.html', 
+                                 error_code=400,
+                                 error_message='下载路径指向文件夹，请选择具体文件'), 400
+        
         as_attachment = request.args.get('as_attachment', 'true').lower() == 'true'
         
-        # 正确处理中文文件名编码
-        if as_attachment:
-            # 获取文件名（路径的最后一部分）
-            download_filename = os.path.basename(filename)
-            
-            # 检查是否为中文文件名，如果是则进行URL编码
-            try:
-                # 尝试使用UTF-8编码
-                download_filename.encode('utf-8')
-                # 如果文件名包含非ASCII字符，进行URL编码
-                if any(ord(char) > 127 for char in download_filename):
-                    from urllib.parse import quote
-                    download_filename = quote(download_filename, encoding='utf-8')
-            except UnicodeEncodeError:
-                # 如果UTF-8编码失败，使用安全文件名
-                download_filename = secure_filename(download_filename)
-            
-            return send_file(file_path, as_attachment=as_attachment, download_name=download_filename)
-        else:
-            # 直接查看文件，不设置下载文件名
-            return send_file(file_path, as_attachment=as_attachment)
+        # 直接返回文件，让浏览器处理文件名编码
+        return send_file(file_path, as_attachment=as_attachment)
             
     except Exception as e:
         return render_template('error.html', 
                              error_code=500,
-                             error_message=f'下载文件失败: {str(e)}'), 500
+                             error_message=f'文件操作失败: {str(e)}'), 500
 
 
 @app.route('/delete/<path:filename>', methods=['DELETE'])
@@ -536,6 +483,66 @@ def api_folder_size_stats():
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+
+@app.route('/api/preview', methods=['POST'])
+@login_required
+def api_preview():
+    """POST接口：获取文件预览地址"""
+    try:
+        data = request.get_json()
+        if not data or 'filepath' not in data:
+            return jsonify({
+                'success': False,
+                'error': '文件路径不能为空'
+            }), 400
+        
+        filepath = data['filepath'].strip()
+        if not filepath:
+            return jsonify({
+                'success': False,
+                'error': '文件路径不能为空'
+            }), 400
+        
+        # 构建完整路径
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filepath)
+        file_path = os.path.normpath(file_path)
+        
+        # 安全检查
+        if not FileUtils.is_safe_path(app.config['UPLOAD_FOLDER'], file_path):
+            return jsonify({
+                'success': False,
+                'error': '访问路径不安全'
+            }), 403
+        
+        if not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': '文件不存在'
+            }), 404
+        
+        # 检查是否为文件夹
+        if os.path.isdir(file_path):
+            return jsonify({
+                'success': False,
+                'error': '路径指向文件夹，请选择具体文件'
+            }), 400
+        
+        # 生成安全的预览URL（使用临时token或会话验证）
+        # 这里直接返回文件路径，前端可以构建预览URL
+        preview_url = f"/download/{filepath}?as_attachment=false"
+        
+        return jsonify({
+            'success': True,
+            'preview_url': preview_url,
+            'filepath': filepath
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取预览地址失败: {str(e)}'
         }), 500
 
 

@@ -214,12 +214,24 @@ class FileUtils:
                         
                         # 计算相对路径
                         if item_path_norm.startswith(base_path):
-                            # 对于文件，计算文件相对于base_path的完整路径
+                            # 对于文件，计算文件相对于base_path的路径
                             if item_type == "file":
+                                # 直接计算文件相对于base_path的路径
                                 relative_path = os.path.relpath(item_path_norm, base_path)
                             # 对于目录，计算目录相对于base_path的路径
                             else:
-                                relative_path = os.path.relpath(item_path_norm, base_path)
+                                # 如果目录就是base_path本身，relative_path应该为空
+                                if item_path_norm == base_path:
+                                    relative_path = ""
+                                else:
+                                    relative_path = os.path.relpath(item_path_norm, base_path)
+                    
+                    # 如果当前路径不是基础路径，需要构建正确的相对路径
+                    if path != base_path and not relative_path:
+                        # 计算当前路径相对于base_path的路径
+                        current_relative_path = os.path.relpath(path, base_path)
+                        # 构建文件的相对路径
+                        relative_path = os.path.join(current_relative_path, item)
                     
                     # 文件大小计算增加错误处理
                     item_size = None
