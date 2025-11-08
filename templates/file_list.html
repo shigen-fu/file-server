@@ -1,209 +1,845 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>文件浏览器</title>
-    <!-- 引入第三方组件资源（使用CDN链接） -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件列表 - 文件服务器</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* 自定义样式 */
-        body {
-            padding: 20px;
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
         }
-
-        .table-container {
-            max-width: 100%;
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .file-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 15px 12px;
+        }
+        
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+        
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .file-name:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .breadcrumb {
+            background: rgba(233, 236, 239, 0.8);
+            border-radius: 12px;
+            padding: 12px 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .file-type-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge.bg-warning {
+            background: linear-gradient(135deg, var(--warning-color) 0%, #ffb347 100%) !important;
+        }
+        
+        .badge.bg-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .file-container {
+                padding: 20px;
+                margin-top: 20px;
+                border-radius: 15px;
+            }
+            
+            .table-responsive {
+                border-radius: 10px;
+            }
+            
+            .table th, .table td {
+                padding: 8px 6px;
+                font-size: 14px;
+            }
+            
+            .btn-action {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .d-flex.justify-content-between {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .d-flex.justify-content-between > div {
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .table th:nth-child(3),
+            .table td:nth-child(3),
+            .table th:nth-child(4),
+            .table td:nth-child(4) {
+                display: none;
+            }
+            
+            .file-container {
+                padding: 15px;
+                margin: 10px;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .file-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .table tbody tr {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .table tbody tr:nth-child(even):hover {
+            background-color: rgba(102, 126, 234, 0.08);
+        }
+        
+        /* 统计信息样式 */
+        .stats-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stats-section h3 {
+            margin-bottom: 1.5rem;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .chart-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .chart-section h4 {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+        
+        .chart-container {
+            max-width: 400px;
             margin: 0 auto;
         }
-
-        td {
-            vertical-align: middle;
+        
+        .folder-stats-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
         }
-
-        .styled-link {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
+        
+        .folder-stats-section h4 {
+            margin-bottom: 1rem;
+            color: #495057;
         }
-
-        .styled-link:hover {
-            color: #0056b3;
+        
+        .folder-stats-list {
+            max-height: 300px;
+            overflow-y: auto;
         }
-
-        /* 优化二维码容器的样式 */
-        .qr-code-container {
-          display: none;
-          border-radius: 10px;
-          border: 2px solid #007bff;
-          background-color: #ffffff;
-          padding: 10px;
-          position: relative;
-          width: 140px;
-          margin-top: 12px;
+        
+        .folder-stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s ease;
         }
-
-        /* 添加小三角形指示器 */
-        .qr-code-container:before {
-          content: '';
-          position: absolute;
-          top: -20px; /* 控制三角形的位置 */
-          right: 15%;
-          transform: translateX(-50%);
-          border-width: 10px;
-          border-style: solid;
-          border-color: transparent transparent #007bff transparent; /* 蓝色边框，其他透明 */
+        
+        .folder-stat-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .folder-stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .folder-name {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .folder-size {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 1rem;
         }
     </style>
 </head>
 <body>
-    <div class="container table-container">
-        <h1 class="mt-4 mb-4">文件浏览器</h1>
-
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>文件名</th>
-                    <th>权限</th>
-                    <th>大小</th>
-                    <th>创建时间</th>
-                    <th>更新时间</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in files_and_dirs %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>
-                        {% if item.type == 'dir' %}
-                            <a class="styled-link" href="/change_dir/{{ item.name }}">{{ item.name }}</a>
-                        {% else %}
-                            <a class="styled-link" href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=false">{{ item.name }}</a>
-                        {% endif %}
-                    </td>
-                    <td>{{ item.permissions }}</td>
-                    <td>
-                    {% if item.size %}
-                            {{ item.size }}
-                    {% else %}
-                            {{ '---' }}
-                    {% endif %}
-                    </td>        
-                    <td>{{ item.create_time }}</td>
-                    <td>{{ item.modify_time }}</td>
-                    <td>
-                        {% if item.type == 'file' %}
-                            <a href="/download/{{ item.relative_path }}/{{ item.name }}?as_attachment=true" class="btn btn-primary">下载</a>
-                            <button class="toggle-qrcode-btn btn btn-success" data-file-address="/download/{{ item.relative_path }}/{{ item.name }}">分享</button>
-                            <div class="qr-code-container"></div>
-                        {% endif %}
-                        <button class="btn btn-danger delete-file-btn" data-file="/delete/{{ item.relative_path }}/{{ item.name }}">删除</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- 删除确认模态框 -->
-        <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmDeleteModalLabel">确认删除</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                确认要删除文件或文件夹 <span class="file-info"></span> 吗？
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-close-modal" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-danger confirm-delete-button">确认删除</button>
-            </div>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-server me-2"></i>
+                文件服务器
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>
+                    {{ current_user }}
+                </span>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-tachometer-alt me-1"></i>控制面板
+                </a>
+                <a class="nav-link" href="{{ url_for('upload_file') }}">
+                    <i class="fas fa-upload me-1"></i>上传
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>退出
+                </a>
             </div>
         </div>
+    </nav>
+
+    <div class="container">
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mt-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="file-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-folder me-2"></i>文件列表
+                </h2>
+                <div>
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                        <i class="fas fa-folder-plus me-2"></i>新建文件夹
+                    </button>
+                    <a href="{{ url_for('upload_file') }}{% if current_path and current_path != upload_folder %}?path={{ current_path.replace(upload_folder + '/', '').replace(upload_folder, '') }}{% endif %}" class="btn btn-primary me-2">
+                        <i class="fas fa-upload me-2"></i>上传文件
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i>控制面板
+                    </a>
+                </div>
+            </div>
+
+            <!-- 路径导航 -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('file_list') }}" class="text-decoration-none">
+                            <i class="fas fa-home"></i> 根目录
+                        </a>
+                    </li>
+                    {% if current_path and current_path != upload_folder %}
+                        {% set relative_path = current_path.replace(upload_folder + '/', '').replace(upload_folder, '') %}
+                        {% set path_parts = relative_path.split('/') %}
+                        {% set accumulated_path = '' %}
+                        
+                        {% for part in path_parts %}
+                            {% if part %}
+                                {% set accumulated_path = accumulated_path + '/' + part if accumulated_path else part %}
+                                <li class="breadcrumb-item">
+                                    <a href="{{ url_for('file_list', path=accumulated_path) }}" class="text-decoration-none">
+                                        {{ part }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </ol>
+            </nav>
+
+            <!-- 文件表格 -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">类型</th>
+                            <th width="35%">名称</th>
+                            <th width="10%">大小</th>
+                            <th width="15%">权限</th>
+                            <th width="20%">修改时间</th>
+                            <th width="15%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in files_and_dirs %}
+                        <tr>
+                            <td>
+                                {% if item.type == 'dir' %}
+                                    <i class="fas fa-folder text-warning"></i>
+                                    <span class="badge bg-warning file-type-badge">文件夹</span>
+                                {% else %}
+                                    <i class="fas fa-file text-primary"></i>
+                                    <span class="badge bg-primary file-type-badge">文件</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                {% set file_path = file_path.replace('//', '/') %}
+                                <a href="{% if item.type == 'dir' %}{{ url_for('file_list', path=file_path) }}{% else %}{{ url_for('download', filename=file_path) }}?as_attachment=false{% endif %}" 
+                                   class="file-name">
+                                    {% if item.type == 'dir' %}
+                                        <i class="fas fa-folder me-1 text-warning"></i>
+                                    {% else %}
+                                        <i class="fas fa-file me-1 text-primary"></i>
+                                    {% endif %}
+                                    {{ item.name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if item.size %}
+                                    <span class="text-muted">{{ item.size }}</span>
+                                {% else %}
+                                    <span class="text-muted">---</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code class="text-muted">{{ item.permissions or '---' }}</code>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ item.modify_time }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if item.type == 'file' %}
+                                        {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                        {% set file_path = file_path.replace('//', '/') %}
+                                        <a href="{{ url_for('download', filename=file_path) }}?as_attachment=true" 
+                                           class="btn btn-outline-primary btn-action" 
+                                           title="下载">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <a href="{{ url_for('download', filename=file_path) }}?as_attachment=false" 
+                                           class="btn btn-outline-success btn-action" 
+                                           target="_blank"
+                                           title="预览">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% set file_path = (item.relative_path + '/' + item.name) if item.relative_path else item.name %}
+                                    {% set file_path = file_path.replace('//', '/') %}
+                                    <button class="btn btn-outline-danger btn-action delete-btn" 
+                                            data-filename="{{ file_path }}"
+                                            data-type="{{ item.type }}"
+                                            title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-folder-open fa-2x mb-2"></i><br>
+                                当前目录为空
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="mt-4 text-muted">
+                <small>
+                    <i class="fas fa-info-circle me-1"></i>
+                    共 {{ files_and_dirs|length }} 个项目
+                    ({{ files_and_dirs|selectattr('type', 'equalto', 'file')|list|length }} 个文件, 
+                    {{ files_and_dirs|selectattr('type', 'equalto', 'dir')|list|length }} 个文件夹)
+                </small>
+            </div>
+
+            <!-- 统计信息区域 -->
+            <div class="stats-section">
+                <h3>存储统计</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="dir-count">0</div>
+                            <div class="stat-label">文件夹数量</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📄</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="file-count">0</div>
+                            <div class="stat-label">文件数量</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="total-size">0 B</div>
+                            <div class="stat-label">总存储大小</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文件类型统计 -->
+                <div class="chart-section">
+                    <h4>文件类型分布</h4>
+                    <div class="chart-container">
+                        <canvas id="fileTypeChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 文件夹大小排行 -->
+                <div class="folder-stats-section">
+                    <h4>文件夹存储排行</h4>
+                    <div class="folder-stats-list" id="folder-stats-list">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.min.js"></script>
+
+    <!-- 创建文件夹模态框 -->
+    <div class="modal fade" id="createFolderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建新文件夹</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createFolderForm">
+                        <div class="mb-3">
+                            <label for="folderName" class="form-label">文件夹名称</label>
+                            <input type="text" class="form-control" id="folderName" required>
+                            <div class="form-text">请输入新文件夹的名称</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" id="confirmCreateFolder">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除 <strong id="deleteFileName"></strong> 吗？</p>
+                    <p class="text-danger"><small>此操作不可撤销！</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // 显示分享的二维码
-            $('.toggle-qrcode-btn').click(function() {
-                // 获取文件名或其他信息
-                const address = "{{address}}" + $(this).data('file-address');
-                
-                // 找到当前按钮所在的行
-                const row = $(this).closest('tr');
-                const qrCodeContainer = row.find('.qr-code-container');
+        // 删除文件功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const createFolderModal = new bootstrap.Modal(document.getElementById('createFolderModal'));
+            let currentDeleteFile = '';
 
-                if (qrCodeContainer.find('canvas').length === 0) {
-                    // 如果二维码不存在，则创建并显示
-                    const qrcode = new QRCode(qrCodeContainer[0], {
-                        text: address,
-                        width: 120,
-                        height: 120
-                    });
-                    qrCodeContainer.show();
-                    $(this).text('取消分享');
-                } else {
-                    qrCodeContainer.empty();
-                    qrCodeContainer.hide();
-                    $(this).text('分享');
-                }
+            // 绑定删除按钮点击事件
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filename = this.dataset.filename;
+                    const type = this.dataset.type;
+                    currentDeleteFile = filename;
+                    
+                    document.getElementById('deleteFileName').textContent = 
+                        type === 'dir' ? `文件夹 "${filename}"` : `文件 "${filename}"`;
+                    
+                    deleteModal.show();
+                });
             });
 
-            // 当点击删除文件按钮
-            $('.delete-file-btn').on('click', function() {
-                var fileAddress = $(this).attr('data-file');
-                console.log('file address: ' + fileAddress);
-                // 将文件信息显示在确认删除模态框中
-                $('#confirmDeleteModal .file-info').text(fileAddress);
-                $('#confirmDeleteModal').modal('show');
-            });
+            // 确认删除
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                if (!currentDeleteFile) return;
 
-            // 按钮关闭对话框
-            $('.btn-close-modal').on('click', function() {
-                closeConfirmDeleteModal();
-            });
-
-            // 当点击确认删除按钮时
-            $('.confirm-delete-button').on('click', function() {
-                 // 获取文件信息属性
-                var fileAddress = $('#confirmDeleteModal .file-info').text();
-                console.log('api-address: ' + fileAddress);
-                // 调用删除文件的接口
-                $.ajax({
-                    url: "{{address}}" + fileAddress,
+                fetch(`/delete/${currentDeleteFile}`, {
                     method: 'DELETE',
-                    success: function(response) {
-                    // 成功删除后刷新数据
-                    refreshData();
-                    // 关闭模态框
-                    closeConfirmDeleteModal();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('删除文件失败: ', error);
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload(); // 刷新页面
+                    } else {
+                        alert('删除失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除错误:', error);
+                    alert('删除失败');
+                })
+                .finally(() => {
+                    deleteModal.hide();
                 });
             });
 
-            // 刷新数据的函数
-            function refreshData() {
-                $('body,html').animate({
-                    scrollTop: 0
-                }, 1000, function() {
-                    window.location.reload();
+            // 创建文件夹功能
+            document.getElementById('confirmCreateFolder').addEventListener('click', function() {
+                const folderName = document.getElementById('folderName').value.trim();
+                if (!folderName) {
+                    alert('请输入文件夹名称');
+                    return;
+                }
+
+                // 获取当前路径
+                const currentPath = getCurrentPathFromBreadcrumb();
+
+                fetch('/create_folder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        folder_name: folderName,
+                        current_path: currentPath
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        createFolderModal.hide();
+                        document.getElementById('folderName').value = '';
+                        location.reload(); // 刷新页面
+                    } else {
+                        alert(data.error || '创建文件夹失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('创建文件夹错误:', error);
+                    alert('创建文件夹失败');
                 });
-            }
-            
-            // 关闭删除文件的对话框
-            function closeConfirmDeleteModal() {
-                $('#confirmDeleteModal').modal('hide');
+            });
+
+            // 重置创建文件夹模态框
+            createFolderModal._element.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('folderName').value = '';
+            });
+
+            // 从面包屑导航获取当前路径
+            function getCurrentPathFromBreadcrumb() {
+                const breadcrumbItems = document.querySelectorAll('.breadcrumb-item');
+                let pathParts = [];
+                
+                // 跳过根目录，从第二个面包屑开始
+                for (let i = 1; i < breadcrumbItems.length; i++) {
+                    const link = breadcrumbItems[i].querySelector('a');
+                    if (link) {
+                        const href = link.getAttribute('href');
+                        const match = href.match(/\/files\/(.+)/);
+                        if (match) {
+                            pathParts = match[1].split('/');
+                        }
+                    }
+                }
+                
+                return pathParts.join('/');
             }
         });
+
+        // 添加一些交互效果
+        document.querySelectorAll('.file-name').forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                this.style.textDecoration = 'underline';
+            });
+            link.addEventListener('mouseleave', function() {
+                this.style.textDecoration = 'none';
+            });
+        });
+
+        // 加载统计信息
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadFileTypeStats();
+            loadFolderSizeStats();
+        });
+
+        // 加载基本统计信息
+        function loadStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('dir-count').textContent = data.data.dir_count;
+                        document.getElementById('file-count').textContent = data.data.file_count;
+                        document.getElementById('total-size').textContent = data.data.total_size_formatted;
+                    }
+                })
+                .catch(error => {
+                    console.error('加载统计信息失败:', error);
+                });
+        }
+
+        // 加载文件类型统计
+        function loadFileTypeStats() {
+            fetch('/api/file_type_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderFileTypeChart(data.data.file_type_stats);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载文件类型统计失败:', error);
+                    document.querySelector('.chart-section').innerHTML = '<p class="text-muted text-center">加载文件类型统计失败</p>';
+                });
+        }
+
+        // 渲染文件类型饼图
+        function renderFileTypeChart(fileTypeStats) {
+            const ctx = document.getElementById('fileTypeChart').getContext('2d');
+            
+            // 准备数据
+            const labels = Object.keys(fileTypeStats);
+            const data = labels.map(type => fileTypeStats[type].percentage);
+            const counts = labels.map(type => fileTypeStats[type].count);
+            const sizes = labels.map(type => fileTypeStats[type].size_formatted);
+            
+            // 定义颜色
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#C9CBCF', '#7C7C7C'
+            ];
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const index = context.dataIndex;
+                                    return `${label}: ${value}% (${counts[index]} 个文件, ${sizes[index]})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 加载文件夹大小统计
+        function loadFolderSizeStats() {
+            fetch('/api/folder_size_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderFolderStats(data.data.folder_stats);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载文件夹大小统计失败:', error);
+                    document.getElementById('folder-stats-list').innerHTML = '<p class="text-muted text-center">加载文件夹大小统计失败</p>';
+                });
+        }
+
+        // 渲染文件夹统计列表
+        function renderFolderStats(folderStats) {
+            const container = document.getElementById('folder-stats-list');
+            
+            if (Object.keys(folderStats).length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">暂无文件夹数据</p>';
+                return;
+            }
+
+            let html = '';
+            Object.entries(folderStats).forEach(([folderName, stats], index) => {
+                html += `
+                    <div class="folder-stat-item">
+                        <div class="folder-name">
+                            <i class="fas fa-folder text-warning me-2"></i>
+                            ${folderName}
+                        </div>
+                        <div class="folder-size">${stats.size_formatted}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
     </script>
 </body>
 </html>

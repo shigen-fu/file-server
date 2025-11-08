@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件服务器 - 控制面板</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.min.js" onerror="handleChartJsError()"></script>
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            border: none;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        .disk-usage {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .file-count {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .folder-count {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .total-size {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-server me-2"></i>
+                文件服务器
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>
+                    {{ current_user }}
+                </span>
+                <a class="nav-link" href="{{ url_for('upload_file') }}">
+                    <i class="fas fa-upload me-1"></i>上传
+                </a>
+                <a class="nav-link" href="{{ url_for('file_list') }}">
+                    <i class="fas fa-list me-1"></i>文件列表
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>退出
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 快速操作 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="quick-actions">
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-action">
+                        <i class="fas fa-upload me-2"></i>上传文件
+                    </a>
+                    <a href="{{ url_for('file_list') }}" class="btn btn-action">
+                        <i class="fas fa-folder me-2"></i>浏览文件
+                    </a>
+                    <button class="btn btn-action" onclick="refreshStats()">
+                        <i class="fas fa-sync-alt me-2"></i>刷新统计
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <!-- 磁盘使用情况 -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">磁盘使用</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ disk_usage.used_formatted }} / {{ disk_usage.total_formatted }}</div>
+                                <div class="text-xs text-muted">{{ disk_usage.usage_percent }}% 已使用</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-hdd fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件数量 -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">文件数量</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ file_stats.file_count }}</div>
+                                <div class="text-xs text-muted">{{ file_stats.dir_count }} 个文件夹</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-file fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件夹数量 -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">文件夹数量</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ file_stats.dir_count }}</div>
+                                <div class="text-xs text-muted">{{ file_stats.file_count }} 个文件</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-folder fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 总大小 -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">总大小</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ file_stats.total_size_formatted }}</div>
+                                <div class="text-xs text-muted">所有文件总大小</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-weight-hanging fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="row g-4">
+            <!-- 磁盘使用图表 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie me-2"></i>磁盘使用分布</h5>
+                    <canvas id="diskChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- 文件类型分布 -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-bar me-2"></i>存储概览</h5>
+                    <canvas id="fileChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 服务器信息 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5><i class="fas fa-info-circle me-2"></i>服务器信息</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>服务器地址:</strong> {{ address }}</p>
+                            <p><strong>上传目录:</strong> {{ file_stats.upload_folder if file_stats.upload_folder else 'upload' }}</p>
+                            <p><strong>版本信息:</strong> {{ version_info.version }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>登录用户:</strong> {{ current_user }}</p>
+                            <p><strong>空闲空间:</strong> {{ disk_usage.free_formatted }}</p>
+                            <p><strong>发布日期:</strong> {{ version_info.release_date }}</p>
+                        </div>
+                    </div>
+                    {% if version_info.description %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <p><strong>版本描述:</strong> {{ version_info.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Chart.js加载错误处理
+        function handleChartJsError() {
+            console.error('Chart.js library failed to load');
+            // 隐藏图表区域
+            const chartContainers = document.querySelectorAll('.chart-container');
+            chartContainers.forEach(container => {
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>图表功能暂时不可用，请检查网络连接</div>';
+            });
+        }
+
+        // 等待页面完全加载后初始化图表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查Chart.js是否已加载
+            if (typeof Chart === 'undefined') {
+                handleChartJsError();
+                return;
+            }
+            
+            // 磁盘使用图表
+            const diskCtx = document.getElementById('diskChart').getContext('2d');
+            const diskChart = new Chart(diskCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['已使用', '空闲空间'],
+                datasets: [{
+                    data: [{{ disk_usage.usage_percent }}, {{ 100 - disk_usage.usage_percent }}],
+                    backgroundColor: ['#667eea', '#e9ecef'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // 文件统计图表
+        const fileCtx = document.getElementById('fileChart').getContext('2d');
+        const fileChart = new Chart(fileCtx, {
+            type: 'bar',
+            data: {
+                labels: ['文件', '文件夹'],
+                datasets: [{
+                    label: '数量',
+                    data: [{{ file_stats.file_count }}, {{ file_stats.dir_count }}],
+                    backgroundColor: ['#f093fb', '#4facfe'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 刷新统计信息
+        async function refreshStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                // 更新页面数据（这里可以扩展为动态更新）
+                location.reload();
+            } catch (error) {
+                console.error('刷新统计失败:', error);
+            }
+        }
+
+            // 自动刷新（可选）
+            // setInterval(refreshStats, 30000); // 30秒刷新一次
+        });
+    </script>
+</body>
+</html>

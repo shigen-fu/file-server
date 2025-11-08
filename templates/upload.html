@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传 - 文件服务器</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .upload-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        .dropzone {
+            border: 2px dashed #dee2e6 !important;
+            border-radius: 10px;
+            background: #f8f9fa;
+            min-height: 200px;
+            padding: 20px;
+        }
+        .dropzone .dz-message {
+            margin: 3em 0;
+            color: #6c757d;
+        }
+        .file-info {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .btn-action {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-server me-2"></i>
+                文件服务器
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>
+                    {{ current_user }}
+                </span>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-tachometer-alt me-1"></i>控制面板
+                </a>
+                <a class="nav-link" href="{{ url_for('file_list') }}">
+                    <i class="fas fa-list me-1"></i>文件列表
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>退出
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mt-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="upload-container">
+            <h2><i class="fas fa-upload me-2"></i>文件上传</h2>
+            {% set url_params = request.args.get('path', '') %}
+            {% if url_params %}
+                <p class="text-muted">
+                    当前上传路径: <code class="bg-light p-1 rounded">{{ url_params }}</code>
+                </p>
+                <p class="text-muted">文件将上传到指定目录，拖放文件到下方区域或点击选择文件</p>
+            {% else %}
+                <p class="text-muted">拖放文件到下方区域或点击选择文件</p>
+            {% endif %}
+            
+            <!-- 上传表单 -->
+            <form action="{{ url_for('upload_file') }}" class="dropzone" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="dz-message">
+                    <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i><br>
+                    <span>拖放文件到这里或点击上传</span>
+                </div>
+            </form>
+
+            <!-- 上传信息 -->
+            <div class="file-info">
+                <h6><i class="fas fa-info-circle me-2"></i>上传说明</h6>
+                <ul class="mb-0">
+                <li>支持的文件类型: {{ allowed_extensions | join(', ') }}</li>
+                <li>最大文件大小: {{ (max_content_length / 1024 / 1024 / 1024) | round(1) }} GB</li>
+                <li>支持多文件同时上传</li>
+                <li>上传完成后文件将保存在服务器上传目录</li>
+                <li>文件名将自动进行安全处理</li>
+            </ul>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="d-flex gap-2 mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>返回控制面板
+                </a>
+                <a href="{{ url_for('file_list') }}{% if request.args.get('path') %}?path={{ request.args.get('path') }}{% endif %}" class="btn btn-action">
+                    <i class="fas fa-list me-2"></i>查看文件列表
+                </a>
+                <button class="btn btn-success" onclick="location.reload()">
+                    <i class="fas fa-sync-alt me-2"></i>刷新页面
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dropzone 配置
+        Dropzone.autoDiscover = false;
+        
+        const myDropzone = new Dropzone('#uploadForm', {
+            paramName: "file",
+            maxFilesize: {{ max_filesize_mb }}, // 动态获取后端配置
+            parallelUploads: 5,
+            uploadMultiple: true,
+            acceptedFiles: "{{ allowed_extensions | join(',') }}", // 动态获取后端配置
+            addRemoveLinks: true,
+            timeout: 0, // 无超时限制
+            
+            // 自定义错误处理
+            error: function(file, errorMessage, xhr) {
+                try {
+                    // 尝试解析JSON错误响应
+                    const errorData = JSON.parse(errorMessage);
+                    if (errorData.error) {
+                        if (errorData.details) {
+                            return errorData.error + ': ' + errorData.details;
+                        }
+                        return errorData.error;
+                    }
+                } catch (e) {
+                    // 如果不是JSON格式，返回原始错误信息
+                }
+                return errorMessage;
+            },
+            
+            init: function() {
+                this.on("sending", function(file, xhr, formData) {
+                    // 获取当前路径参数并添加到表单数据
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const currentPath = urlParams.get('path') || '';
+                    formData.append('current_path', currentPath);
+                    console.log("上传文件到路径:", currentPath);
+                });
+                
+                this.on("success", function(file, response) {
+                    console.log("文件上传成功:", file.name, response);
+                    
+                    // 显示成功消息
+                    if (response.success) {
+                        showAlert(response.message, 'success');
+                        
+                        // 3秒后自动刷新页面
+                        setTimeout(() => {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const currentPath = urlParams.get('path') || '';
+                            if (currentPath) {
+                                window.location.href = '/files?path=' + encodeURIComponent(currentPath);
+                            } else {
+                                window.location.href = '/files';
+                            }
+                        }, 3000);
+                    }
+                });
+                
+                this.on("error", function(file, errorMessage, xhr) {
+                    console.error("文件上传失败:", file.name, errorMessage);
+                    
+                    // 显示错误消息
+                    let displayMessage = errorMessage;
+                    try {
+                        const errorData = JSON.parse(errorMessage);
+                        if (errorData.error) {
+                            displayMessage = errorData.error;
+                            if (errorData.details) {
+                                displayMessage += ' (' + errorData.details + ')';
+                            }
+                        }
+                    } catch (e) {
+                        // 如果不是JSON格式，使用原始错误信息
+                    }
+                    
+                    showAlert(displayMessage, 'danger');
+                });
+                
+                this.on("complete", function(file) {
+                    if (file.status === "success") {
+                        console.log("上传完成:", file.name);
+                    }
+                });
+                
+                this.on("queuecomplete", function() {
+                    console.log("所有文件上传完成");
+                });
+                
+                this.on("addedfile", function(file) {
+                    console.log("添加文件:", file.name, "大小:", file.size, "bytes");
+                });
+            }
+        });
+
+        // 添加上传进度显示
+        myDropzone.on("uploadprogress", function(file, progress, bytesSent) {
+            console.log("文件:", file.name, "进度:", progress.toFixed(2), "%");
+        });
+        
+        // 显示消息提示的函数
+        function showAlert(message, type) {
+            // 移除现有的提示
+            const existingAlerts = document.querySelectorAll('.alert-dismissible');
+            existingAlerts.forEach(alert => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            });
+            
+            // 创建新的提示
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-4`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // 插入到容器顶部
+            const container = document.querySelector('.container');
+            const uploadContainer = document.querySelector('.upload-container');
+            container.insertBefore(alertDiv, uploadContainer);
+            
+            // 5秒后自动消失
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // 添加上传统计信息
+        function updateUploadStats() {
+            const files = myDropzone.getAcceptedFiles();
+            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            
+            console.log(`上传统计: ${files.length} 个文件, 总大小: ${totalSizeMB} MB`);
+        }
+        
+        // 监听文件添加事件
+        myDropzone.on("addedfiles", function(files) {
+            updateUploadStats();
+        });
+    </script>
+</body>
+</html>

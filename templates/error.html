@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错误 - 文件服务器</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 50px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .error-code {
+            font-size: 48px;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            font-size: 18px;
+            color: #6c757d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            {% if error_code == 404 %}
+                <i class="fas fa-exclamation-triangle"></i>
+            {% elif error_code == 403 %}
+                <i class="fas fa-lock"></i>
+            {% elif error_code == 500 %}
+                <i class="fas fa-server"></i>
+            {% else %}
+                <i class="fas fa-exclamation-circle"></i>
+            {% endif %}
+        </div>
+        
+        <div class="error-code">{{ error_code }}</div>
+        
+        <h2 class="error-title">
+            {% if error_code == 404 %}
+                页面未找到
+            {% elif error_code == 403 %}
+                访问被拒绝
+            {% elif error_code == 500 %}
+                服务器内部错误
+            {% else %}
+                发生错误
+            {% endif %}
+        </h2>
+        
+        <div class="error-message">
+            {{ error_message }}
+        </div>
+        
+        <div class="btn-group">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>返回首页
+            </a>
+            <a href="{{ url_for('file_list') }}" class="btn btn-outline-primary">
+                <i class="fas fa-folder me-2"></i>文件列表
+            </a>
+            <button onclick="history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>返回上页
+            </button>
+        </div>
+        
+        {% if error_details %}
+        <div class="mt-4">
+            <details>
+                <summary class="text-muted">
+                    <small>错误详情</small>
+                </summary>
+                <pre class="mt-2 p-3 bg-light rounded text-start" style="font-size: 12px;">{{ error_details }}</pre>
+            </details>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.error-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.5s ease';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

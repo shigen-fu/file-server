@@ -45,6 +45,27 @@ need python3+ environment
 
 [file-server An open source LAN file sharing tool](https://github.com/shigen-fu/file-server.git)
 
+# 📋Feature List
+
+## Core Features
+- **File Upload**: Support drag-and-drop upload, QR code upload, multiple file upload
+- **File Download**: One-click download files to local device
+- **File Management**: File list display, file deletion, folder creation
+- **QR Code Sharing**: Automatically generate download and upload QR codes
+
+## Advanced Features
+- **User Authentication**: Support multi-user login and permission management
+- **File Statistics**: Real-time statistics on file type distribution and folder storage ranking
+- **Configuration Management**: Flexible configuration system with runtime modification support
+- **Session Management**: Secure session mechanism with automatic expiration
+- **Dashboard**: Visual statistical information display
+
+## Technical Features
+- **Cross-Platform**: Support for Windows, macOS, and Linux systems
+- **Containerization**: Docker support with one-click deployment
+- **Lightweight**: All frontend dependencies loaded via CDN, no additional installation required
+- **High Performance**: Built on Flask framework with fast response times
+
 # 🟢how to use
 
 Just one command.

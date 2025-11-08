@@ -1,0 +1,34 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 9000,
+    "debug": false,
+    "secret_key": "your-secret-key-change-in-production"
+  },
+  "upload": {
+    "folder": "~/Downloads/upload",
+    "max_file_size": "4.9GB",
+    "allowed_extensions": [".txt", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".jpg", ".jpeg", ".png", ".gif", ".zip", ".rar", ".mp4", ".mp3", ".avi", ".mov"]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "password": "admin123",
+      "role": "admin"
+    },
+    {
+      "username": "user",
+      "password": "user123",
+      "role": "user"
+    }
+  ],
+  "session": {
+    "timeout": 3600,
+    "secure": false
+  },
+  "dashboard": {
+    "refresh_interval": 30000,
+    "show_file_stats": true,
+    "show_disk_usage": true
+  }
+}
